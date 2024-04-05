@@ -12,6 +12,18 @@ from transformers.tokenization_utils import AddedToken, PreTrainedTokenizer
 
 class CharacterTokenizer(PreTrainedTokenizer):
     def __init__(self, characters: Sequence[str], model_max_length: int, **kwargs):
+        self._vocab_str_to_int = {
+            "[CLS]": 0,
+            "[SEP]": 1,
+            "[BOS]": 2,
+            "[MASK]": 3,
+            "[PAD]": 4,
+            "[RESERVED]": 5,
+            "[UNK]": 6,
+            **{ch: i + 7 for i, ch in enumerate(characters)},
+        }
+        self._vocab_int_to_str = {v: k for k, v in self._vocab_str_to_int.items()}
+        
         """Character tokenizer for Hugging Face transformers.
 
         Args:
@@ -30,6 +42,7 @@ class CharacterTokenizer(PreTrainedTokenizer):
 
             model_max_length (int): Model maximum sequence length.
         """
+
         self.characters = characters
         self.model_max_length = model_max_length
         bos_token = AddedToken("[BOS]", lstrip=False, rstrip=False)
@@ -53,22 +66,13 @@ class CharacterTokenizer(PreTrainedTokenizer):
             model_max_length=model_max_length,
             **kwargs,
         )
-
-        self._vocab_str_to_int = {
-            "[CLS]": 0,
-            "[SEP]": 1,
-            "[BOS]": 2,
-            "[MASK]": 3,
-            "[PAD]": 4,
-            "[RESERVED]": 5,
-            "[UNK]": 6,
-            **{ch: i + 7 for i, ch in enumerate(characters)},
-        }
-        self._vocab_int_to_str = {v: k for k, v in self._vocab_str_to_int.items()}
-
+    
     @property
     def vocab_size(self) -> int:
         return len(self._vocab_str_to_int)
+    
+    def get_vocab(self):
+        return dict(self._vocab_str_to_int)
 
     def _tokenize(self, text: str) -> List[str]:
         return list(text)
